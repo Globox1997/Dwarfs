@@ -3,13 +3,14 @@
   "id": "dwarfs",
   "version": "${version}",
   "name": "Dwarfs",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "description": "This is all about dwarfs",
   "authors": [
     "Globox_Z"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/dwarfs",
+    "sources": "https://github.com/Globox1997/Dwarfs",
+    "issues": "https://github.com/Globox1997/Dwarfs/issues"
   },
   "license": "MIT",
   "icon": "assets/dwarfs/icon.png",
