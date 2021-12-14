@@ -18,7 +18,6 @@ import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.CelebrateRaidWinTask;
 import net.minecraft.entity.ai.brain.task.CompositeTask;
 import net.minecraft.entity.ai.brain.task.EndRaidTask;
-import net.minecraft.entity.ai.brain.task.FarmerWorkTask;
 import net.minecraft.entity.ai.brain.task.FindEntityTask;
 import net.minecraft.entity.ai.brain.task.FindInteractionTargetTask;
 import net.minecraft.entity.ai.brain.task.FindPointOfInterestTask;
@@ -49,7 +48,6 @@ import net.minecraft.entity.ai.brain.task.StartRaidTask;
 import net.minecraft.entity.ai.brain.task.StayAboveWaterTask;
 import net.minecraft.entity.ai.brain.task.StopPanickingTask;
 import net.minecraft.entity.ai.brain.task.Task;
-import net.minecraft.entity.ai.brain.task.VillagerWorkTask;
 import net.minecraft.entity.ai.brain.task.WaitTask;
 import net.minecraft.entity.ai.brain.task.WakeUpTask;
 import net.minecraft.entity.ai.brain.task.WalkHomeTask;
@@ -87,7 +85,7 @@ public class DwarfTaskListProvider {
     }
 
     public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createWorkTasks(VillagerProfession profession, float speed) {
-        VillagerWorkTask villagerWorkTask = profession == VillagerProfession.FARMER ? new FarmerWorkTask() : new VillagerWorkTask();
+        DwarfWorkTask villagerWorkTask = profession == VillagerProfession.FARMER ? new FarmerWorkTask() : new DwarfWorkTask();
         return ImmutableList.of(DwarfTaskListProvider.createBusyFollowTask(),
                 Pair.of(5,
                         new RandomTask(ImmutableList.of(Pair.of(villagerWorkTask, 7), Pair.of(new GoToIfNearbyTask(MemoryModuleType.JOB_SITE, 0.4f, 4), 2),

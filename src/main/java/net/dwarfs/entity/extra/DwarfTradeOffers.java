@@ -1,4 +1,4 @@
-package net.dwarfs.entity.trade;
+package net.dwarfs.entity.extra;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -83,12 +83,7 @@ public class DwarfTradeOffers {
                         new Factory[] { new BuyForOneEmeraldFactory(Items.COD, 15, 16, 10), new ProcessItemFactory(Items.SALMON, 6, Items.COOKED_SALMON, 6, 16, 5),
                                 new SellItemFactory(Items.CAMPFIRE, 2, 1, 5) },
                         3, new Factory[] { new BuyForOneEmeraldFactory(Items.SALMON, 13, 16, 20), new SellEnchantedToolFactory(Items.FISHING_ROD, 3, 3, 10, 0.2f) }, 4,
-                        new Factory[] { new BuyForOneEmeraldFactory(Items.TROPICAL_FISH, 6, 12, 30) }, 5,
-                        new Factory[] { new BuyForOneEmeraldFactory(Items.PUFFERFISH, 4, 12, 30),
-                                new TypeAwareBuyForOneEmeraldFactory(1, 12, 30,
-                                        ImmutableMap.builder().put(VillagerType.PLAINS, Items.OAK_BOAT).put(VillagerType.TAIGA, Items.SPRUCE_BOAT).put(VillagerType.SNOW, Items.SPRUCE_BOAT)
-                                                .put(VillagerType.DESERT, Items.JUNGLE_BOAT).put(VillagerType.JUNGLE, Items.JUNGLE_BOAT).put(VillagerType.SAVANNA, Items.ACACIA_BOAT)
-                                                .put(VillagerType.SWAMP, Items.DARK_OAK_BOAT).build()) })));
+                        new Factory[] { new BuyForOneEmeraldFactory(Items.TROPICAL_FISH, 6, 12, 30) })));
         map.put(VillagerProfession.SHEPHERD, DwarfTradeOffers.copyToFastUtilMap(ImmutableMap.of(1,
                 new Factory[] { new BuyForOneEmeraldFactory(Blocks.WHITE_WOOL, 18, 16, 2), new BuyForOneEmeraldFactory(Blocks.BROWN_WOOL, 18, 16, 2),
                         new BuyForOneEmeraldFactory(Blocks.BLACK_WOOL, 18, 16, 2), new BuyForOneEmeraldFactory(Blocks.GRAY_WOOL, 18, 16, 2), new SellItemFactory(Items.SHEARS, 2, 1, 1) },
@@ -133,15 +128,13 @@ public class DwarfTradeOffers {
                 new Factory[] { new BuyForOneEmeraldFactory(Items.TRIPWIRE_HOOK, 8, 12, 30), new SellEnchantedToolFactory(Items.CROSSBOW, 3, 3, 15),
                         new SellPotionHoldingItemFactory(Items.ARROW, 5, Items.TIPPED_ARROW, 5, 2, 12, 30) })));
         map.put(VillagerProfession.LIBRARIAN,
-                DwarfTradeOffers
-                        .copyToFastUtilMap(
-                                ImmutableMap.builder()
-                                        .put(1, new Factory[] { new BuyForOneEmeraldFactory(Items.PAPER, 24, 16, 2), new EnchantBookFactory(1), new SellItemFactory(Blocks.BOOKSHELF, 9, 1, 12, 1) })
-                                        .put(2, new Factory[] { new BuyForOneEmeraldFactory(Items.BOOK, 4, 12, 10), new EnchantBookFactory(5), new SellItemFactory(Items.LANTERN, 1, 1, 5) }).put(3,
-                                                new Factory[] { new BuyForOneEmeraldFactory(Items.INK_SAC, 5, 12, 20), new EnchantBookFactory(10), new SellItemFactory(Items.GLASS, 1, 4, 10) })
-                                        .put(4, new Factory[] { new BuyForOneEmeraldFactory(Items.WRITABLE_BOOK, 2, 12, 30), new EnchantBookFactory(15), new SellItemFactory(Items.CLOCK, 5, 1, 15),
-                                                new SellItemFactory(Items.COMPASS, 4, 1, 15) })
-                                        .put(5, new Factory[] { new SellItemFactory(Items.NAME_TAG, 20, 1, 30) }).build()));
+                DwarfTradeOffers.copyToFastUtilMap(
+                        ImmutableMap.of(1, new Factory[] { new BuyForOneEmeraldFactory(Items.PAPER, 24, 16, 2), new EnchantBookFactory(1), new SellItemFactory(Blocks.BOOKSHELF, 9, 1, 12, 1) }, 2,
+                                new Factory[] { new BuyForOneEmeraldFactory(Items.BOOK, 4, 12, 10), new EnchantBookFactory(5), new SellItemFactory(Items.LANTERN, 1, 1, 5) }, 3,
+                                new Factory[] { new BuyForOneEmeraldFactory(Items.INK_SAC, 5, 12, 20), new EnchantBookFactory(10), new SellItemFactory(Items.GLASS, 1, 4, 10) }, 4,
+                                new Factory[] { new BuyForOneEmeraldFactory(Items.WRITABLE_BOOK, 2, 12, 30), new EnchantBookFactory(15), new SellItemFactory(Items.CLOCK, 5, 1, 15),
+                                        new SellItemFactory(Items.COMPASS, 4, 1, 15) },
+                                5, new Factory[] { new SellItemFactory(Items.NAME_TAG, 20, 1, 30) })));
         map.put(VillagerProfession.CARTOGRAPHER,
                 DwarfTradeOffers.copyToFastUtilMap(ImmutableMap.of(1, new Factory[] { new BuyForOneEmeraldFactory(Items.PAPER, 24, 16, 2), new SellItemFactory(Items.MAP, 7, 1, 1) }, 2,
                         new Factory[] { new BuyForOneEmeraldFactory(Items.GLASS_PANE, 11, 16, 10), new SellMapFactory(13, StructureFeature.MONUMENT, MapIcon.Type.MONUMENT, 12, 5) }, 3,
@@ -233,6 +226,12 @@ public class DwarfTradeOffers {
                                 new SellItemFactory(Blocks.PURPLE_GLAZED_TERRACOTTA, 1, 1, 12, 15), new SellItemFactory(Blocks.YELLOW_GLAZED_TERRACOTTA, 1, 1, 12, 15),
                                 new SellItemFactory(Blocks.BROWN_GLAZED_TERRACOTTA, 1, 1, 12, 15) },
                         5, new Factory[] { new SellItemFactory(Blocks.QUARTZ_PILLAR, 1, 1, 12, 30), new SellItemFactory(Blocks.QUARTZ_BLOCK, 1, 1, 12, 30) })));
+
+        // new Factory[] { new BuyForOneEmeraldFactory(Items.PUFFERFISH, 4, 12, 30),
+        // new TypeAwareBuyForOneEmeraldFactory(1, 12, 30,
+        // ImmutableMap.builder().put(VillagerType.PLAINS, Items.OAK_BOAT).put(VillagerType.TAIGA, Items.SPRUCE_BOAT).put(VillagerType.SNOW, Items.SPRUCE_BOAT)
+        // .put(VillagerType.DESERT, Items.JUNGLE_BOAT).put(VillagerType.JUNGLE, Items.JUNGLE_BOAT).put(VillagerType.SAVANNA, Items.ACACIA_BOAT)
+        // .put(VillagerType.SWAMP, Items.DARK_OAK_BOAT).build()) }
     });
     public static final Int2ObjectMap<Factory[]> WANDERING_TRADER_TRADES = DwarfTradeOffers.copyToFastUtilMap(ImmutableMap.of(1,
             new Factory[] { new SellItemFactory(Items.SEA_PICKLE, 2, 1, 5, 1), new SellItemFactory(Items.SLIME_BALL, 4, 1, 5, 1), new SellItemFactory(Items.GLOWSTONE, 2, 1, 5, 1),
