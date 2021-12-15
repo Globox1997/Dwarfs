@@ -26,4 +26,8 @@ public interface RegistryAccess {
     // return Registry.create(key, defaultId, Lifecycle.experimental(), defaultEntry);
     // }
 
+    // private static <T> DefaultedRegistry<T> create(RegistryKey<? extends Registry<T>> key, String defaultId, Supplier<T> defaultEntry) {
+    // return Registry.create(key, defaultId, Lifecycle.experimental(), defaultEntry);
+    // }
+
 }
