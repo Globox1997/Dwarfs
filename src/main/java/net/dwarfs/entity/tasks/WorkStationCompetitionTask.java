@@ -3,18 +3,18 @@ package net.dwarfs.entity.tasks;
 import com.google.common.collect.ImmutableMap;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.poi.PointOfInterestType;
 
 public class WorkStationCompetitionTask extends Task<DwarfEntity> {
-    final VillagerProfession profession;
+    final DwarfProfession profession;
 
-    public WorkStationCompetitionTask(VillagerProfession profession) {
+    public WorkStationCompetitionTask(DwarfProfession profession) {
         super(ImmutableMap.of(MemoryModuleType.JOB_SITE, MemoryModuleState.VALUE_PRESENT, MemoryModuleType.MOBS, MemoryModuleState.VALUE_PRESENT));
         this.profession = profession;
     }
@@ -53,10 +53,10 @@ public class WorkStationCompetitionTask extends Task<DwarfEntity> {
 
     private boolean isUsingWorkStationAt(GlobalPos pos, PointOfInterestType poiType, DwarfEntity dwarfEntity) {
         return this.hasJobSite(dwarfEntity) && pos.equals(dwarfEntity.getBrain().getOptionalMemory(MemoryModuleType.JOB_SITE).get())
-                && this.isCompletedWorkStation(poiType, dwarfEntity.getVillagerData().getProfession());
+                && this.isCompletedWorkStation(poiType, dwarfEntity.getDwarfData().getProfession());
     }
 
-    private boolean isCompletedWorkStation(PointOfInterestType poiType, VillagerProfession profession) {
+    private boolean isCompletedWorkStation(PointOfInterestType poiType, DwarfProfession profession) {
         return profession.getWorkStation().getCompletionCondition().test(poiType);
     }
 

@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
 import net.dwarfs.init.EntityInit;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -55,14 +56,13 @@ import net.minecraft.entity.ai.brain.task.WalkToNearestVisibleWantedItemTask;
 import net.minecraft.entity.ai.brain.task.WanderAroundTask;
 import net.minecraft.entity.ai.brain.task.WanderIndoorsTask;
 import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.poi.PointOfInterestType;
 
 public class DwarfTaskListProvider {
     // private static final float field_30189 = 0.4f;
 
     // Pair<Integer, ? extends Task<? super DwarfEntity>>
-    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createCoreTasks(VillagerProfession profession, float speed) {
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createCoreTasks(DwarfProfession profession, float speed) {
 
         return ImmutableList.of(Pair.of(0, new StayAboveWaterTask(0.8f)), Pair.of(0, new OpenDoorsTask()), Pair.of(0, new LookAroundTask(45, 90)), Pair.of(0, new WakeUpTask()),
                 Pair.of(0, new StartRaidTask()), Pair.of(0, new ForgetCompletedPointOfInterestTask(profession.getWorkStation(), MemoryModuleType.JOB_SITE)),
@@ -84,14 +84,14 @@ public class DwarfTaskListProvider {
         // , Pair.of(0, new PanicTask()), Pair.of(0, new HideWhenBellRingsTask()), Pair.of(3, new FollowCustomerTask(speed))
     }
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createWorkTasks(VillagerProfession profession, float speed) {
-        DwarfWorkTask villagerWorkTask = profession == VillagerProfession.FARMER ? new FarmerWorkTask() : new DwarfWorkTask();
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createWorkTasks(DwarfProfession profession, float speed) {
+        DwarfWorkTask villagerWorkTask = profession == DwarfProfession.FARMER ? new FarmerWorkTask() : new DwarfWorkTask();
         return ImmutableList.of(DwarfTaskListProvider.createBusyFollowTask(),
                 Pair.of(5,
                         new RandomTask(ImmutableList.of(Pair.of(villagerWorkTask, 7), Pair.of(new GoToIfNearbyTask(MemoryModuleType.JOB_SITE, 0.4f, 4), 2),
                                 Pair.of(new GoToNearbyPositionTask(MemoryModuleType.JOB_SITE, 0.4f, 1, 10), 5),
                                 Pair.of(new GoToSecondaryPositionTask(MemoryModuleType.SECONDARY_JOB_SITE, speed, 1, 6, MemoryModuleType.JOB_SITE), 5),
-                                Pair.of(new FarmerDwarfTask(), profession == VillagerProfession.FARMER ? 2 : 5), Pair.of(new BoneMealTask(), profession == VillagerProfession.FARMER ? 4 : 7)))),
+                                Pair.of(new FarmerDwarfTask(), profession == DwarfProfession.FARMER ? 2 : 5), Pair.of(new BoneMealTask(), profession == DwarfProfession.FARMER ? 4 : 7)))),
                 Pair.of(10, new HoldTradeOffersTask(400, 1600)), Pair.of(10, new FindInteractionTargetTask(EntityType.PLAYER, 4)),
                 Pair.of(2, new DwarfWalkTowardsTask(MemoryModuleType.JOB_SITE, speed, 9, 100, 1200)), Pair.of(99, new ScheduleActivityTask()));
         // , Pair.of(3, new GiveGiftsToHeroTask(100))
@@ -107,7 +107,7 @@ public class DwarfTaskListProvider {
                 Pair.of(99, new ScheduleActivityTask()));
     }
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createRestTasks(VillagerProfession profession, float speed) {
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createRestTasks(DwarfProfession profession, float speed) {
         return ImmutableList.of(Pair.of(2, new DwarfWalkTowardsTask(MemoryModuleType.HOME, speed, 1, 150, 1200)),
                 Pair.of(3, new ForgetCompletedPointOfInterestTask(PointOfInterestType.HOME, MemoryModuleType.HOME)), Pair.of(3, new SleepTask()),
                 Pair.of(5,
@@ -116,7 +116,7 @@ public class DwarfTaskListProvider {
                 DwarfTaskListProvider.createBusyFollowTask(), Pair.of(99, new ScheduleActivityTask()));
     }
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createMeetTasks(VillagerProfession profession, float speed) {
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createMeetTasks(DwarfProfession profession, float speed) {
         return ImmutableList.of(Pair.of(2, new RandomTask(ImmutableList.of(Pair.of(new GoToIfNearbyTask(MemoryModuleType.MEETING_POINT, 0.4f, 40), 2), Pair.of(new MeetDwarfTask(), 2)))),
                 Pair.of(10, new HoldTradeOffersTask(400, 1600)), Pair.of(10, new FindInteractionTargetTask(EntityType.PLAYER, 4)),
                 Pair.of(2, new DwarfWalkTowardsTask(MemoryModuleType.MEETING_POINT, speed, 6, 100, 200)),
@@ -126,7 +126,7 @@ public class DwarfTaskListProvider {
         // Pair.of(3, new GiveGiftsToHeroTask(100)),
     }
 
-    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createIdleTasks(VillagerProfession profession, float speed) {
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createIdleTasks(DwarfProfession profession, float speed) {
         return ImmutableList.of(
                 Pair.of(2,
                         new RandomTask(ImmutableList.of(Pair.of(FindEntityTask.create(EntityType.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 2),
@@ -144,27 +144,27 @@ public class DwarfTaskListProvider {
         // Pair.of(3, new GiveGiftsToHeroTask(100)),
     }
 
-    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createPanicTasks(VillagerProfession profession, float speed) {
+    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createPanicTasks(DwarfProfession profession, float speed) {
     // float f = speed * 1.5f;
     // return ImmutableList.of(Pair.of(0, new StopPanickingTask()), Pair.of(1, GoToRememberedPositionTask.toEntity(MemoryModuleType.NEAREST_HOSTILE, f, 6, false)),
     // Pair.of(1, GoToRememberedPositionTask.toEntity(MemoryModuleType.HURT_BY_ENTITY, f, 6, false)), Pair.of(3, new FindWalkTargetTask(f, 2, 2)),
     // DwarfTaskListProvider.createBusyFollowTask());
     // }
 
-    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createPreRaidTasks(VillagerProfession profession, float speed) {
+    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createPreRaidTasks(DwarfProfession profession, float speed) {
     // return ImmutableList.of(Pair.of(0, new RingBellTask()),
     // Pair.of(0, new RandomTask(
     // ImmutableList.of(Pair.of(new VillagerWalkTowardsTask(MemoryModuleType.MEETING_POINT, speed * 1.5f, 2, 150, 200), 6), Pair.of(new FindWalkTargetTask(speed * 1.5f), 2)))),
     // DwarfTaskListProvider.createBusyFollowTask(), Pair.of(99, new EndRaidTask()));
     // }
 
-    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createRaidTasks(VillagerProfession profession, float speed) {
+    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createRaidTasks(DwarfProfession profession, float speed) {
     // return ImmutableList.of(Pair.of(0, new RandomTask(ImmutableList.of(Pair.of(new SeekSkyAfterRaidWinTask(speed), 5), Pair.of(new RunAroundAfterRaidTask(speed * 1.1f), 2)))),
     // Pair.of(0, new CelebrateRaidWinTask(600, 600)), Pair.of(2, new HideInHomeDuringRaidTask(24, speed * 1.4f)), DwarfTaskListProvider.createBusyFollowTask(),
     // Pair.of(99, new EndRaidTask()));
     // }
 
-    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createHideTasks(VillagerProfession profession, float speed) {
+    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createHideTasks(DwarfProfession profession, float speed) {
     // int i = 2;
     // return ImmutableList.of(Pair.of(0, new ForgetBellRingTask(15, 3)), Pair.of(1, new HideInHomeTask(32, speed * 1.25f, 2)), DwarfTaskListProvider.createBusyFollowTask());
     // }

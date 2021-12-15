@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
@@ -53,10 +54,10 @@ public class GatherItemsDwarfTask extends Task<DwarfEntity> {
         }
         LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarfEntity2, 0.5f);
         dwarfEntity.talkWithVillager(serverWorld, dwarfEntity2, l);
-        if (dwarfEntity.wantsToStartBreeding() && (dwarfEntity.getVillagerData().getProfession() == VillagerProfession.FARMER || dwarfEntity2.canBreed())) {
+        if (dwarfEntity.wantsToStartBreeding() && (dwarfEntity.getDwarfData().getProfession() == DwarfProfession.FARMER || dwarfEntity2.canBreed())) {
             GatherItemsDwarfTask.giveHalfOfStack(dwarfEntity, dwarfEntity.ITEM_FOOD_VALUES.keySet(), dwarfEntity2);
         }
-        if (dwarfEntity2.getVillagerData().getProfession() == VillagerProfession.FARMER && dwarfEntity.getInventory().count(Items.WHEAT) > Items.WHEAT.getMaxCount() / 2) {
+        if (dwarfEntity2.getDwarfData().getProfession() == DwarfProfession.FARMER && dwarfEntity.getInventory().count(Items.WHEAT) > Items.WHEAT.getMaxCount() / 2) {
             GatherItemsDwarfTask.giveHalfOfStack(dwarfEntity, ImmutableSet.of(Items.WHEAT), dwarfEntity2);
         }
         if (!this.items.isEmpty() && dwarfEntity.getInventory().containsAny(this.items)) {
@@ -70,13 +71,13 @@ public class GatherItemsDwarfTask extends Task<DwarfEntity> {
     }
 
     private static Set<Item> getGatherableItems(DwarfEntity dwarfEntity, DwarfEntity dwarfEntity2) {
-        ImmutableSet<Item> immutableSet = dwarfEntity2.getVillagerData().getProfession().getGatherableItems();
-        ImmutableSet<Item> immutableSet2 = dwarfEntity.getVillagerData().getProfession().getGatherableItems();
+        ImmutableSet<Item> immutableSet = dwarfEntity2.getDwarfData().getProfession().getGatherableItems();
+        ImmutableSet<Item> immutableSet2 = dwarfEntity.getDwarfData().getProfession().getGatherableItems();
         return immutableSet.stream().filter(item -> !immutableSet2.contains(item)).collect(Collectors.toSet());
     }
 
-    private static void giveHalfOfStack(DwarfEntity villager, Set<Item> validItems, LivingEntity target) {
-        SimpleInventory simpleInventory = villager.getInventory();
+    private static void giveHalfOfStack(DwarfEntity dwarfEntity, Set<Item> validItems, LivingEntity target) {
+        SimpleInventory simpleInventory = dwarfEntity.getInventory();
         ItemStack itemStack = ItemStack.EMPTY;
         for (int i = 0; i < simpleInventory.size(); ++i) {
             int j;
@@ -96,7 +97,7 @@ public class GatherItemsDwarfTask extends Task<DwarfEntity> {
             break;
         }
         if (!itemStack.isEmpty()) {
-            LookTargetUtil.give(villager, itemStack, target.getPos());
+            LookTargetUtil.give(dwarfEntity, itemStack, target.getPos());
         }
     }
 

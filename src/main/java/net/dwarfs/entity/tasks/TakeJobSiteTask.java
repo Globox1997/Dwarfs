@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Optional;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -14,7 +15,6 @@ import net.minecraft.server.network.DebugInfoSender;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.poi.PointOfInterestType;
 
 public class TakeJobSiteTask extends Task<DwarfEntity> {
@@ -31,7 +31,7 @@ public class TakeJobSiteTask extends Task<DwarfEntity> {
         if (dwarfEntity.isBaby()) {
             return false;
         }
-        return dwarfEntity.getVillagerData().getProfession() == VillagerProfession.NONE;
+        return dwarfEntity.getDwarfData().getProfession() == DwarfProfession.NONE;
     }
 
     @Override
@@ -51,8 +51,8 @@ public class TakeJobSiteTask extends Task<DwarfEntity> {
             return false;
         }
         Optional<GlobalPos> optional = dwarfEntity.getBrain().getOptionalMemory(MemoryModuleType.JOB_SITE);
-        VillagerProfession villagerProfession = dwarfEntity.getVillagerData().getProfession();
-        if (dwarfEntity.getVillagerData().getProfession() != VillagerProfession.NONE && villagerProfession.getWorkStation().getCompletionCondition().test(poiType)) {
+        DwarfProfession dwarfProfession = dwarfEntity.getDwarfData().getProfession();
+        if (dwarfEntity.getDwarfData().getProfession() != DwarfProfession.NONE && dwarfProfession.getWorkStation().getCompletionCondition().test(poiType)) {
             if (!optional.isPresent()) {
                 return this.canReachJobSite(dwarfEntity, pos, poiType);
             }

@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Optional;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
+import net.dwarfs.init.EntityInit;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
@@ -11,8 +13,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.village.VillagerProfession;
 
 public class GoToWorkTask extends Task<DwarfEntity> {
     public GoToWorkTask() {
@@ -31,13 +31,13 @@ public class GoToWorkTask extends Task<DwarfEntity> {
         dwarfEntity.getBrain().forget(MemoryModuleType.POTENTIAL_JOB_SITE);
         dwarfEntity.getBrain().remember(MemoryModuleType.JOB_SITE, globalPos);
         serverWorld.sendEntityStatus(dwarfEntity, (byte) 14);
-        if (dwarfEntity.getVillagerData().getProfession() != VillagerProfession.NONE) {
+        if (dwarfEntity.getDwarfData().getProfession() != DwarfProfession.NONE) {
             return;
         }
         MinecraftServer minecraftServer = serverWorld.getServer();
         Optional.ofNullable(minecraftServer.getWorld(globalPos.getDimension())).flatMap(world -> world.getPointOfInterestStorage().getType(globalPos.getPos()))
-                .flatMap(poiType -> Registry.VILLAGER_PROFESSION.stream().filter(profession -> profession.getWorkStation() == poiType).findFirst()).ifPresent(profession -> {
-                    dwarfEntity.setVillagerData(dwarfEntity.getVillagerData().withProfession((VillagerProfession) profession));
+                .flatMap(poiType -> EntityInit.DWARF_PROFESSION.stream().filter(profession -> profession.getWorkStation() == poiType).findFirst()).ifPresent(profession -> {
+                    dwarfEntity.setDwarfData(dwarfEntity.getDwarfData().withProfession((DwarfProfession) profession));
                     dwarfEntity.reinitializeBrain(serverWorld);
                 });
     }

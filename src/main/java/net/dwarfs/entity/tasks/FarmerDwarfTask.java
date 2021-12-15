@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 import net.dwarfs.entity.DwarfEntity;
+import net.dwarfs.entity.extra.DwarfProfession;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -22,7 +23,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class FarmerDwarfTask extends Task<DwarfEntity> {
         if (!serverWorld.getGameRules().getBoolean(GameRules.DO_MOB_GRIEFING)) {
             return false;
         }
-        if (dwarfEntity.getVillagerData().getProfession() != VillagerProfession.FARMER) {
+        if (dwarfEntity.getDwarfData().getProfession() != DwarfProfession.FARMER) {
             return false;
         }
         BlockPos.Mutable mutable = dwarfEntity.getBlockPos().mutableCopy();

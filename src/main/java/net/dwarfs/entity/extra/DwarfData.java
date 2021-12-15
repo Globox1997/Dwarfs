@@ -1,15 +1,11 @@
 package net.dwarfs.entity.extra;
 
-import java.util.function.BiFunction;
-
 import com.mojang.datafixers.kinds.Applicative;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.dwarfs.init.EntityInit;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.village.VillagerType;
 
 public class DwarfData {
     public static final int field_30613 = 1;

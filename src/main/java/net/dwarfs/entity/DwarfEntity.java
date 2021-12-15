@@ -18,9 +18,12 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+import net.dwarfs.entity.extra.DwarfData;
+import net.dwarfs.entity.extra.DwarfDataContainer;
+import net.dwarfs.entity.extra.DwarfProfession;
+import net.dwarfs.entity.extra.DwarfTradeOffers;
 import net.dwarfs.entity.tasks.DwarfTaskListProvider;
 import net.dwarfs.init.EntityInit;
-import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityData;
@@ -45,13 +48,13 @@ import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.ai.brain.sensor.GolemLastSeenSensor;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
-import net.minecraft.entity.ai.brain.task.VillagerTaskListProvider;
 import net.minecraft.entity.ai.pathing.MobNavigation;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandler;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -71,6 +74,7 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -93,10 +97,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.village.Merchant;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
-import net.minecraft.village.TradeOffers;
 import net.minecraft.village.VillageGossipType;
-import net.minecraft.village.VillagerData;
-import net.minecraft.village.VillagerDataContainer;
 import net.minecraft.village.VillagerGossips;
 import net.minecraft.village.VillagerProfession;
 import net.minecraft.village.VillagerType;
@@ -109,7 +110,7 @@ import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
 import org.jetbrains.annotations.Nullable;
 
-public class DwarfEntity extends PassiveEntity implements InteractionObserver, VillagerDataContainer, InventoryOwner, Npc, Merchant {
+public class DwarfEntity extends PassiveEntity implements InteractionObserver, DwarfDataContainer, InventoryOwner, Npc, Merchant {
     // Merchant
     private static final TrackedData<Integer> HEAD_ROLLING_TIME_LEFT = DataTracker.registerData(MerchantEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final int field_30599 = 300;
@@ -121,7 +122,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     private final SimpleInventory inventory = new SimpleInventory(8);
 
     // Villager
-    private static final TrackedData<VillagerData> VILLAGER_DATA = DataTracker.registerData(DwarfEntity.class, TrackedDataHandlerRegistry.VILLAGER_DATA);
+    private static final TrackedData<DwarfData> DWARF_DATA = DataTracker.registerData(DwarfEntity.class, DwarfProfession.DWARF_DATA);
     public static final int field_30602 = 12;
     public static final Map<Item, Integer> ITEM_FOOD_VALUES = ImmutableMap.of(Items.BREAD, 4, Items.POTATO, 1, Items.CARROT, 1, Items.BEETROOT, 1);
     private static final int field_30604 = 2;
@@ -160,7 +161,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
             SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY);
     // , SensorType.VILLAGER_HOSTILES, SensorType.VILLAGER_BABIES, SensorType.SECONDARY_POIS, SensorType.GOLEM_DETECTED
     public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<DwarfEntity, PointOfInterestType>> POINTS_OF_INTEREST = ImmutableMap.of(MemoryModuleType.HOME,
-            (villager, poiType) -> poiType == PointOfInterestType.HOME, MemoryModuleType.JOB_SITE, (villager, poiType) -> villager.getVillagerData().getProfession().getWorkStation() == poiType,
+            (villager, poiType) -> poiType == PointOfInterestType.HOME, MemoryModuleType.JOB_SITE, (villager, poiType) -> villager.getDwarfData().getProfession().getWorkStation() == poiType,
             MemoryModuleType.POTENTIAL_JOB_SITE, (villager, poiType) -> PointOfInterestType.IS_USED_BY_PROFESSION.test((PointOfInterestType) poiType), MemoryModuleType.MEETING_POINT,
             (villager, poiType) -> poiType == PointOfInterestType.MEETING);
 
@@ -179,7 +180,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         ((MobNavigation) this.getNavigation()).setCanPathThroughDoors(true);
         this.getNavigation().setCanSwim(true);
         this.setCanPickUpLoot(true);
-        this.setVillagerData(this.getVillagerData().withProfession(VillagerProfession.NONE));
+        this.setDwarfData(this.getDwarfData().withProfession(DwarfProfession.NONE));
     }
 
     public static DefaultAttributeContainer.Builder createDwarfAttributes() {
@@ -212,18 +213,18 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     }
 
     private void initBrain(Brain<DwarfEntity> brain) {
-        VillagerProfession villagerProfession = this.getVillagerData().getProfession();
+        DwarfProfession dwarfProfession = this.getDwarfData().getProfession();
         if (this.isBaby()) {
             brain.setSchedule(Schedule.VILLAGER_BABY);
             brain.setTaskList(Activity.PLAY, DwarfTaskListProvider.createPlayTasks(0.5f));
         } else {
             brain.setSchedule(Schedule.VILLAGER_DEFAULT);
-            brain.setTaskList(Activity.WORK, DwarfTaskListProvider.createWorkTasks(villagerProfession, 0.5f), ImmutableSet.of(Pair.of(MemoryModuleType.JOB_SITE, MemoryModuleState.VALUE_PRESENT)));
+            brain.setTaskList(Activity.WORK, DwarfTaskListProvider.createWorkTasks(dwarfProfession, 0.5f), ImmutableSet.of(Pair.of(MemoryModuleType.JOB_SITE, MemoryModuleState.VALUE_PRESENT)));
         }
-        brain.setTaskList(Activity.CORE, DwarfTaskListProvider.createCoreTasks(villagerProfession, 0.5f));
-        brain.setTaskList(Activity.MEET, DwarfTaskListProvider.createMeetTasks(villagerProfession, 0.5f), ImmutableSet.of(Pair.of(MemoryModuleType.MEETING_POINT, MemoryModuleState.VALUE_PRESENT)));
-        brain.setTaskList(Activity.REST, DwarfTaskListProvider.createRestTasks(villagerProfession, 0.5f));
-        brain.setTaskList(Activity.IDLE, DwarfTaskListProvider.createIdleTasks(villagerProfession, 0.5f));
+        brain.setTaskList(Activity.CORE, DwarfTaskListProvider.createCoreTasks(dwarfProfession, 0.5f));
+        brain.setTaskList(Activity.MEET, DwarfTaskListProvider.createMeetTasks(dwarfProfession, 0.5f), ImmutableSet.of(Pair.of(MemoryModuleType.MEETING_POINT, MemoryModuleState.VALUE_PRESENT)));
+        brain.setTaskList(Activity.REST, DwarfTaskListProvider.createRestTasks(dwarfProfession, 0.5f));
+        brain.setTaskList(Activity.IDLE, DwarfTaskListProvider.createIdleTasks(dwarfProfession, 0.5f));
         // brain.setTaskList(Activity.PANIC, VillagerTaskListProvider.createPanicTasks(villagerProfession, 0.5f));
         // brain.setTaskList(Activity.PRE_RAID, VillagerTaskListProvider.createPreRaidTasks(villagerProfession, 0.5f));
         // brain.setTaskList(Activity.RAID, VillagerTaskListProvider.createRaidTasks(villagerProfession, 0.5f));
@@ -242,10 +243,6 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         }
     }
 
-    public static DefaultAttributeContainer.Builder createVillagerAttributes() {
-        return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.5).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 48.0);
-    }
-
     public boolean isNatural() {
         return this.natural;
     }
@@ -253,7 +250,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     @Override
     protected void mobTick() {
         Raid raid;
-        this.world.getProfiler().push("villagerBrain");
+        this.world.getProfiler().push("dwarfBrain");
         this.getBrain().tick((ServerWorld) this.world, this);
         this.world.getProfiler().pop();
         if (this.natural) {
@@ -277,7 +274,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         if (!this.isAiDisabled() && this.random.nextInt(100) == 0 && (raid = ((ServerWorld) this.world).getRaidAt(this.getBlockPos())) != null && raid.isActive() && !raid.isFinished()) {
             this.world.sendEntityStatus(this, (byte) 42);
         }
-        if (this.getVillagerData().getProfession() == VillagerProfession.NONE && this.hasCustomer()) {
+        if (this.getDwarfData().getProfession() == DwarfProfession.NONE && this.hasCustomer()) {
             this.resetCustomer();
         }
         super.mobTick();
@@ -328,7 +325,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     private void beginTradeWith(PlayerEntity customer) {
         this.prepareOffersFor(customer);
         this.setCurrentCustomer(customer);
-        this.sendOffers(customer, this.getDisplayName(), this.getVillagerData().getLevel());
+        this.sendOffers(customer, this.getDisplayName(), this.getDwarfData().getLevel());
     }
 
     @Override
@@ -448,7 +445,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     protected void initDataTracker() {
         super.initDataTracker();
         this.dataTracker.startTracking(HEAD_ROLLING_TIME_LEFT, 0);
-        this.dataTracker.startTracking(VILLAGER_DATA, new VillagerData(VillagerType.PLAINS, VillagerProfession.NONE, 1));
+        this.dataTracker.startTracking(DWARF_DATA, new DwarfData(DwarfProfession.NONE, 1));
     }
 
     @Override
@@ -461,7 +458,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         }
         nbt.put("Inventory", this.inventory.toNbtList());
 
-        VillagerData.CODEC.encodeStart(NbtOps.INSTANCE, this.getVillagerData()).resultOrPartial(LOGGER::error).ifPresent(nbtElement -> nbt.put("VillagerData", (NbtElement) nbtElement));
+        DwarfData.CODEC.encodeStart(NbtOps.INSTANCE, this.getDwarfData()).resultOrPartial(LOGGER::error).ifPresent(nbtElement -> nbt.put("DwarfData", (NbtElement) nbtElement));
         nbt.putByte("FoodLevel", this.foodLevel);
         nbt.put("Gossips", this.gossip.serialize(NbtOps.INSTANCE).getValue());
         nbt.putInt("Xp", this.experience);
@@ -483,9 +480,9 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         }
         this.inventory.readNbtList(nbt.getList("Inventory", 10));
 
-        if (nbt.contains("VillagerData", 10)) {
-            dataResult = VillagerData.CODEC.parse(new Dynamic<NbtElement>(NbtOps.INSTANCE, nbt.get("VillagerData")));
-            ((DataResult<VillagerData>) dataResult).resultOrPartial(LOGGER::error).ifPresent(this::setVillagerData);
+        if (nbt.contains("DwarfData", 10)) {
+            dataResult = DwarfData.CODEC.parse(new Dynamic<NbtElement>(NbtOps.INSTANCE, nbt.get("DwarfData")));
+            ((DataResult<DwarfData>) dataResult).resultOrPartial(LOGGER::error).ifPresent(this::setDwarfData);
         }
         if (nbt.contains("Offers", 10)) {
             this.offers = new TradeOfferList(nbt.getCompound("Offers"));
@@ -539,24 +536,24 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     }
 
     public void playWorkSound() {
-        SoundEvent soundEvent = this.getVillagerData().getProfession().getWorkSound();
+        SoundEvent soundEvent = this.getDwarfData().getProfession().getWorkSound();
         if (soundEvent != null) {
             this.playSound(soundEvent, this.getSoundVolume(), this.getSoundPitch());
         }
     }
 
     @Override
-    public void setVillagerData(VillagerData villagerData) {
-        VillagerData villagerData2 = this.getVillagerData();
-        if (villagerData2.getProfession() != villagerData.getProfession()) {
+    public void setDwarfData(DwarfData dwarfData) {
+        DwarfData dwarfData2 = this.getDwarfData();
+        if (dwarfData2.getProfession() != dwarfData.getProfession()) {
             this.offers = null;
         }
-        this.dataTracker.set(VILLAGER_DATA, villagerData);
+        this.dataTracker.set(DWARF_DATA, dwarfData);
     }
 
     @Override
-    public VillagerData getVillagerData() {
-        return this.dataTracker.get(VILLAGER_DATA);
+    public DwarfData getDwarfData() {
+        return this.dataTracker.get(DWARF_DATA);
     }
 
     private void afterUsing(TradeOffer offer) {
@@ -692,18 +689,18 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     }
 
     private boolean canLevelUp() {
-        int i = this.getVillagerData().getLevel();
-        return VillagerData.canLevelUp(i) && this.experience >= VillagerData.getUpperLevelExperience(i);
+        int i = this.getDwarfData().getLevel();
+        return DwarfData.canLevelUp(i) && this.experience >= DwarfData.getUpperLevelExperience(i);
     }
 
     private void levelUp() {
-        this.setVillagerData(this.getVillagerData().withLevel(this.getVillagerData().getLevel() + 1));
+        this.setDwarfData(this.getDwarfData().withLevel(this.getDwarfData().getLevel() + 1));
         this.fillRecipes();
     }
 
     @Override
     protected Text getDefaultName() {
-        return new TranslatableText(this.getType().getTranslationKey() + "." + Registry.VILLAGER_PROFESSION.getId(this.getVillagerData().getProfession()).getPath());
+        return new TranslatableText(this.getType().getTranslationKey() + "." + EntityInit.DWARF_PROFESSION.getId(this.getDwarfData().getProfession()).getPath());
     }
 
     @Override
@@ -725,10 +722,10 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     @Nullable
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
         if (spawnReason == SpawnReason.BREEDING) {
-            this.setVillagerData(this.getVillagerData().withProfession(VillagerProfession.NONE));
+            this.setDwarfData(this.getDwarfData().withProfession(DwarfProfession.NONE));
         }
         if (spawnReason == SpawnReason.COMMAND || spawnReason == SpawnReason.SPAWN_EGG || spawnReason == SpawnReason.SPAWNER || spawnReason == SpawnReason.DISPENSER) {
-            this.setVillagerData(this.getVillagerData().withType(VillagerType.forBiome(world.getBiomeKey(this.getBlockPos()))));
+            this.setDwarfData(this.getDwarfData().withProfession(DwarfProfession.NONE));
         }
         if (spawnReason == SpawnReason.STRUCTURE) {
             this.natural = true;
@@ -749,7 +746,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     @Override
     public void onStruckByLightning(ServerWorld world, LightningEntity lightning) {
         if (world.getDifficulty() != Difficulty.PEACEFUL) {
-            LOGGER.info("Villager {} was struck by lightning {}.", (Object) this, (Object) lightning);
+            LOGGER.info("Dwarf {} was struck by lightning {}.", (Object) this, (Object) lightning);
             WitchEntity witchEntity = EntityType.WITCH.create(world);
             witchEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.getYaw(), this.getPitch());
             witchEntity.initialize(world, world.getLocalDifficulty(witchEntity.getBlockPos()), SpawnReason.CONVERSION, null, null);
@@ -790,7 +787,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     @Override
     public boolean canGather(ItemStack stack) {
         Item item = stack.getItem();
-        return (GATHERABLE_ITEMS.contains(item) || this.getVillagerData().getProfession().getGatherableItems().contains(item)) && this.getInventory().canInsert(stack);
+        return (GATHERABLE_ITEMS.contains(item) || this.getDwarfData().getProfession().getGatherableItems().contains(item)) && this.getInventory().canInsert(stack);
     }
 
     public boolean wantsToStartBreeding() {
@@ -811,12 +808,12 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
     }
 
     private void fillRecipes() {
-        VillagerData villagerData = this.getVillagerData();
-        Int2ObjectMap<TradeOffers.Factory[]> int2ObjectMap = TradeOffers.PROFESSION_TO_LEVELED_TRADE.get(villagerData.getProfession());
+        DwarfData dwarfData = this.getDwarfData();
+        Int2ObjectMap<DwarfTradeOffers.Factory[]> int2ObjectMap = DwarfTradeOffers.PROFESSION_TO_LEVELED_TRADE.get(dwarfData.getProfession());
         if (int2ObjectMap == null || int2ObjectMap.isEmpty()) {
             return;
         }
-        TradeOffers.Factory[] factorys = (TradeOffers.Factory[]) int2ObjectMap.get(villagerData.getLevel());
+        DwarfTradeOffers.Factory[] factorys = (DwarfTradeOffers.Factory[]) int2ObjectMap.get(dwarfData.getLevel());
         if (factorys == null) {
             return;
         }
@@ -1087,7 +1084,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
         return super.getStackReference(mappedIndex);
     }
 
-    protected void fillRecipesFromPool(TradeOfferList recipeList, TradeOffers.Factory[] pool, int count) {
+    protected void fillRecipesFromPool(TradeOfferList recipeList, DwarfTradeOffers.Factory[] pool, int count) {
         HashSet<Integer> set = Sets.newHashSet();
         if (pool.length > count) {
             while (set.size() < count) {
@@ -1099,7 +1096,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, V
             }
         }
         for (Integer integer : set) {
-            TradeOffers.Factory factory = pool[integer];
+            DwarfTradeOffers.Factory factory = pool[integer];
             TradeOffer tradeOffer = factory.create(this, this.random);
             if (tradeOffer == null)
                 continue;

@@ -58,13 +58,4 @@ public class WalkTowardJobSiteTask extends Task<DwarfEntity> {
         dwarfEntity.getBrain().forget(MemoryModuleType.POTENTIAL_JOB_SITE);
     }
 
-    // @Override
-    // protected boolean shouldKeepRunning(ServerWorld world, LivingEntity entity, long time) {
-    // return this.shouldKeepRunning(world, (DwarfEntity) entity, time);
-    // }
-
-    // @Override
-    // protected void keepRunning(ServerWorld world, LivingEntity entity, long time) {
-    // this.keepRunning(world, (DwarfEntity) entity, time);
-    // }
 }
