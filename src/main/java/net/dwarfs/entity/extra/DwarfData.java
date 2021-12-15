@@ -5,14 +5,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.dwarfs.init.EntityInit;
+import net.dwarfs.init.PointOfInterestsInit;
 
 public class DwarfData {
     public static final int field_30613 = 1;
     public static final int field_30614 = 5;
     private static final int[] LEVEL_BASE_EXPERIENCE = new int[] { 0, 10, 70, 150, 250 };
     public static final Codec<DwarfData> CODEC = RecordCodecBuilder.create(instance -> instance
-            .group(((MapCodec) EntityInit.DWARF_PROFESSION.getCodec().fieldOf("profession")).orElseGet(() -> DwarfProfession.NONE).forGetter(dwarfData -> ((DwarfData) dwarfData).profession),
+            .group(((MapCodec) PointOfInterestsInit.DWARF_PROFESSION.getCodec().fieldOf("profession")).orElseGet(() -> DwarfProfession.NONE)
+                    .forGetter(dwarfData -> ((DwarfData) dwarfData).profession),
 
                     ((MapCodec) Codec.INT.fieldOf("level")).orElse(1).forGetter(dwarfData -> ((DwarfData) dwarfData).level))
             .apply((Applicative) instance, (profession1, level1) -> new DwarfData((DwarfProfession) profession1, (int) level1)));// (Applicative<DwarfData, ?>)

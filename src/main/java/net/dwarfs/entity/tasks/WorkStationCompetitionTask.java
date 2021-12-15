@@ -25,7 +25,7 @@ public class WorkStationCompetitionTask extends Task<DwarfEntity> {
         serverWorld.getPointOfInterestStorage().getType(globalPos.getPos())
                 .ifPresent(pointOfInterestType -> DwarfTaskListProvider
                         .streamSeenDwarfs(dwarfEntity, dwarfEntity2 -> this.isUsingWorkStationAt(globalPos, (PointOfInterestType) pointOfInterestType, (DwarfEntity) dwarfEntity2))
-                        .reduce(dwarfEntity, WorkStationCompetitionTask::keepJobSiteForMoreExperiencedVillager));
+                        .reduce(dwarfEntity, WorkStationCompetitionTask::keepJobSiteForMoreExperiencedDwarf));
     }
 
     // @Override
@@ -37,18 +37,18 @@ public class WorkStationCompetitionTask extends Task<DwarfEntity> {
     // .reduce(villagerEntity, WorkStationCompetitionTask::keepJobSiteForMoreExperiencedVillager));
     // }
 
-    private static DwarfEntity keepJobSiteForMoreExperiencedVillager(DwarfEntity first, DwarfEntity second) {
-        DwarfEntity villagerEntity2;
-        DwarfEntity villagerEntity;
+    private static DwarfEntity keepJobSiteForMoreExperiencedDwarf(DwarfEntity first, DwarfEntity second) {
+        DwarfEntity dwarfEntity2;
+        DwarfEntity dwarfEntity;
         if (first.getExperience() > second.getExperience()) {
-            villagerEntity = first;
-            villagerEntity2 = second;
+            dwarfEntity = first;
+            dwarfEntity2 = second;
         } else {
-            villagerEntity = second;
-            villagerEntity2 = first;
+            dwarfEntity = second;
+            dwarfEntity2 = first;
         }
-        villagerEntity2.getBrain().forget(MemoryModuleType.JOB_SITE);
-        return villagerEntity;
+        dwarfEntity2.getBrain().forget(MemoryModuleType.JOB_SITE);
+        return dwarfEntity;
     }
 
     private boolean isUsingWorkStationAt(GlobalPos pos, PointOfInterestType poiType, DwarfEntity dwarfEntity) {

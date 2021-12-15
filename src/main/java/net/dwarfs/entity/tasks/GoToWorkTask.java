@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import net.dwarfs.entity.DwarfEntity;
 import net.dwarfs.entity.extra.DwarfProfession;
-import net.dwarfs.init.EntityInit;
+import net.dwarfs.init.PointOfInterestsInit;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.task.Task;
@@ -36,7 +36,7 @@ public class GoToWorkTask extends Task<DwarfEntity> {
         }
         MinecraftServer minecraftServer = serverWorld.getServer();
         Optional.ofNullable(minecraftServer.getWorld(globalPos.getDimension())).flatMap(world -> world.getPointOfInterestStorage().getType(globalPos.getPos()))
-                .flatMap(poiType -> EntityInit.DWARF_PROFESSION.stream().filter(profession -> profession.getWorkStation() == poiType).findFirst()).ifPresent(profession -> {
+                .flatMap(poiType -> PointOfInterestsInit.DWARF_PROFESSION.stream().filter(profession -> profession.getWorkStation() == poiType).findFirst()).ifPresent(profession -> {
                     dwarfEntity.setDwarfData(dwarfEntity.getDwarfData().withProfession((DwarfProfession) profession));
                     dwarfEntity.reinitializeBrain(serverWorld);
                 });

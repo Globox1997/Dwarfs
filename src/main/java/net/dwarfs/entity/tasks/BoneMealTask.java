@@ -80,11 +80,11 @@ public class BoneMealTask extends Task<DwarfEntity> {
         this.duration = 0;
     }
 
-    private void addLookWalkTargets(DwarfEntity villager) {
+    private void addLookWalkTargets(DwarfEntity dwarfEntity) {
         this.pos.ifPresent(pos -> {
             BlockPosLookTarget blockPosLookTarget = new BlockPosLookTarget((BlockPos) pos);
-            villager.getBrain().remember(MemoryModuleType.LOOK_TARGET, blockPosLookTarget);
-            villager.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(blockPosLookTarget, 0.5f, 1));
+            dwarfEntity.getBrain().remember(MemoryModuleType.LOOK_TARGET, blockPosLookTarget);
+            dwarfEntity.getBrain().remember(MemoryModuleType.WALK_TARGET, new WalkTarget(blockPosLookTarget, 0.5f, 1));
         });
     }
 

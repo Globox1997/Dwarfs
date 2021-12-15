@@ -2,7 +2,6 @@ package net.dwarfs.entity.extra;
 
 import com.google.common.collect.ImmutableSet;
 
-import net.dwarfs.init.EntityInit;
 import net.dwarfs.init.PointOfInterestsInit;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -84,20 +83,20 @@ public class DwarfProfession {
     }
 
     static DwarfProfession register(String id, PointOfInterestType workStation, ImmutableSet<Item> gatherableItems, ImmutableSet<Block> secondaryJobSites, @Nullable SoundEvent workSound) {
-        return Registry.register(EntityInit.DWARF_PROFESSION, new Identifier(id), new DwarfProfession(id, workStation, gatherableItems, secondaryJobSites, workSound));
+        return Registry.register(PointOfInterestsInit.DWARF_PROFESSION, new Identifier(id), new DwarfProfession(id, workStation, gatherableItems, secondaryJobSites, workSound));
     }
 
     public static final TrackedDataHandler<DwarfData> DWARF_DATA = new TrackedDataHandler<DwarfData>() {
 
         @Override
         public void write(PacketByteBuf packetByteBuf, DwarfData dwarfData) {
-            packetByteBuf.writeVarInt(EntityInit.DWARF_PROFESSION.getRawId(dwarfData.getProfession()));
+            packetByteBuf.writeVarInt(PointOfInterestsInit.DWARF_PROFESSION.getRawId(dwarfData.getProfession()));
             packetByteBuf.writeVarInt(dwarfData.getLevel());
         }
 
         @Override
         public DwarfData read(PacketByteBuf packetByteBuf) {
-            return new DwarfData(EntityInit.DWARF_PROFESSION.get(packetByteBuf.readVarInt()), packetByteBuf.readVarInt());
+            return new DwarfData(PointOfInterestsInit.DWARF_PROFESSION.get(packetByteBuf.readVarInt()), packetByteBuf.readVarInt());
         }
 
         @Override

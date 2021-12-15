@@ -11,12 +11,10 @@ import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 import net.dwarfs.entity.extra.DwarfData;
 import net.dwarfs.entity.extra.DwarfDataContainer;
@@ -24,7 +22,9 @@ import net.dwarfs.entity.extra.DwarfProfession;
 import net.dwarfs.entity.extra.DwarfTradeOffers;
 import net.dwarfs.entity.tasks.DwarfTaskListProvider;
 import net.dwarfs.init.EntityInit;
+import net.dwarfs.init.PointOfInterestsInit;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.SmithingTableBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityDimensions;
@@ -45,27 +45,22 @@ import net.minecraft.entity.ai.brain.LivingTargetCache;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.Schedule;
-import net.minecraft.entity.ai.brain.sensor.GolemLastSeenSensor;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
+import net.minecraft.entity.ai.brain.task.LookTargetUtil;
 import net.minecraft.entity.ai.pathing.MobNavigation;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandler;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.WitchEntity;
-import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
@@ -74,7 +69,6 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -90,17 +84,13 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.village.Merchant;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.village.VillageGossipType;
 import net.minecraft.village.VillagerGossips;
-import net.minecraft.village.VillagerProfession;
-import net.minecraft.village.VillagerType;
 import net.minecraft.village.raid.Raid;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.LocalDifficulty;
@@ -114,7 +104,6 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
     // Merchant
     private static final TrackedData<Integer> HEAD_ROLLING_TIME_LEFT = DataTracker.registerData(MerchantEntity.class, TrackedDataHandlerRegistry.INTEGER);
     public static final int field_30599 = 300;
-    private static final int INVENTORY_SIZE = 8;
     @Nullable
     private PlayerEntity customer;
     @Nullable
@@ -125,22 +114,13 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
     private static final TrackedData<DwarfData> DWARF_DATA = DataTracker.registerData(DwarfEntity.class, DwarfProfession.DWARF_DATA);
     public static final int field_30602 = 12;
     public static final Map<Item, Integer> ITEM_FOOD_VALUES = ImmutableMap.of(Items.BREAD, 4, Items.POTATO, 1, Items.CARROT, 1, Items.BEETROOT, 1);
-    private static final int field_30604 = 2;
     private static final Set<Item> GATHERABLE_ITEMS = ImmutableSet.of(Items.BREAD, Items.POTATO, Items.CARROT, Items.WHEAT, Items.WHEAT_SEEDS, Items.BEETROOT, new Item[] { Items.BEETROOT_SEEDS });
-    private static final int field_30605 = 10;
-    private static final int field_30606 = 1200;
-    private static final int field_30607 = 24000;
-    private static final int field_30608 = 25;
-    private static final int field_30609 = 10;
-    private static final int field_30610 = 5;
-    private static final long field_30611 = 24000L;
     @VisibleForTesting
     public static final float field_30603 = 0.5f;
     private int levelUpTimer;
     private boolean levelingUp;
     @Nullable
     private PlayerEntity lastCustomer;
-    private boolean field_30612;
     private byte foodLevel;
     private final VillagerGossips gossip = new VillagerGossips();
     private long gossipStartTime;
@@ -155,14 +135,15 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
             MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.WALK_TARGET,
             new MemoryModuleType[] { MemoryModuleType.LOOK_TARGET, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.BREED_TARGET, MemoryModuleType.PATH, MemoryModuleType.DOORS_TO_CLOSE,
                     MemoryModuleType.NEAREST_BED, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.NEAREST_HOSTILE, MemoryModuleType.SECONDARY_JOB_SITE,
-                    MemoryModuleType.HIDING_PLACE, MemoryModuleType.HEARD_BELL_TIME, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.LAST_SLEPT, MemoryModuleType.LAST_WOKEN,
-                    MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY });
+                    MemoryModuleType.HIDING_PLACE, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.LAST_SLEPT, MemoryModuleType.LAST_WOKEN,
+                    MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY });
     private static final ImmutableList<SensorType<? extends Sensor<? super DwarfEntity>>> SENSORS = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS,
-            SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY);
-    // , SensorType.VILLAGER_HOSTILES, SensorType.VILLAGER_BABIES, SensorType.SECONDARY_POIS, SensorType.GOLEM_DETECTED
+            SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY, PointOfInterestsInit.DWARF_HOSTILES_SENSOR, PointOfInterestsInit.DWARF_BABIES_SENSOR,
+            PointOfInterestsInit.DWARF_SECONDARY_POI_SENSOR);
+    // , SensorType.GOLEM_DETECTED
     public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<DwarfEntity, PointOfInterestType>> POINTS_OF_INTEREST = ImmutableMap.of(MemoryModuleType.HOME,
             (villager, poiType) -> poiType == PointOfInterestType.HOME, MemoryModuleType.JOB_SITE, (villager, poiType) -> villager.getDwarfData().getProfession().getWorkStation() == poiType,
-            MemoryModuleType.POTENTIAL_JOB_SITE, (villager, poiType) -> PointOfInterestType.IS_USED_BY_PROFESSION.test((PointOfInterestType) poiType), MemoryModuleType.MEETING_POINT,
+            MemoryModuleType.POTENTIAL_JOB_SITE, (villager, poiType) -> PointOfInterestsInit.IS_USED_BY_DWARF_PROFESSION.test((PointOfInterestType) poiType), MemoryModuleType.MEETING_POINT,
             (villager, poiType) -> poiType == PointOfInterestType.MEETING);
 
     // public DwarfEntity(EntityType<? extends DwarfEntity> entityType, World world) {
@@ -184,8 +165,8 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
     }
 
     public static DefaultAttributeContainer.Builder createDwarfAttributes() {
-        return PassiveEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 40.0D).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 8.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.45D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 20.0D).add(EntityAttributes.GENERIC_ARMOR, 1.0D);
+        return PassiveEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 40.0D).add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 10.0D)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.45D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 24.0D).add(EntityAttributes.GENERIC_ARMOR, 2.0D);
     }
 
     @Override
@@ -229,6 +210,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         // brain.setTaskList(Activity.PRE_RAID, VillagerTaskListProvider.createPreRaidTasks(villagerProfession, 0.5f));
         // brain.setTaskList(Activity.RAID, VillagerTaskListProvider.createRaidTasks(villagerProfession, 0.5f));
         // brain.setTaskList(Activity.HIDE, VillagerTaskListProvider.createHideTasks(villagerProfession, 0.5f));
+        brain.setTaskList(Activity.FIGHT, DwarfTaskListProvider.createFightTasks(dwarfProfession, 0.6f));
         brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
         brain.setDefaultActivity(Activity.IDLE);
         brain.doExclusively(Activity.IDLE);
@@ -249,7 +231,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
 
     @Override
     protected void mobTick() {
-        Raid raid;
+        // Raid raid;
         this.world.getProfiler().push("dwarfBrain");
         this.getBrain().tick((ServerWorld) this.world, this);
         this.world.getProfiler().pop();
@@ -271,9 +253,9 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
             this.world.sendEntityStatus(this, (byte) 14);
             this.lastCustomer = null;
         }
-        if (!this.isAiDisabled() && this.random.nextInt(100) == 0 && (raid = ((ServerWorld) this.world).getRaidAt(this.getBlockPos())) != null && raid.isActive() && !raid.isFinished()) {
-            this.world.sendEntityStatus(this, (byte) 42);
-        }
+        // if (!this.isAiDisabled() && this.random.nextInt(100) == 0 && (raid = ((ServerWorld) this.world).getRaidAt(this.getBlockPos())) != null && raid.isActive() && !raid.isFinished()) {
+        // this.world.sendEntityStatus(this, (byte) 42);
+        // }
         if (this.getDwarfData().getProfession() == DwarfProfession.NONE && this.hasCustomer()) {
             this.resetCustomer();
         }
@@ -292,6 +274,9 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack itemStack = player.getStackInHand(hand);
+
+        System.out.println("Interact: " + this.getDwarfData().getProfession() + "::" + this.isBaby());
+
         if (!itemStack.isOf(Items.VILLAGER_SPAWN_EGG) && this.isAlive() && !this.hasCustomer() && !this.isSleeping()) {
             if (this.isBaby()) {
                 this.sayNo();
@@ -302,7 +287,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
                 if (bl && !this.world.isClient) {
                     this.sayNo();
                 }
-                player.incrementStat(Stats.TALKED_TO_VILLAGER);
+                // player.incrementStat(Stats.TALKED_TO_VILLAGER);
             }
             if (bl) {
                 return ActionResult.success(this.world.isClient);
@@ -570,13 +555,13 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         }
     }
 
-    public void method_35201(boolean bl) {
-        this.field_30612 = bl;
-    }
+    // public void method_35201(boolean bl) {
+    // this.field_30612 = bl;
+    // }
 
-    public boolean method_35200() {
-        return this.field_30612;
-    }
+    // public boolean method_35200() {
+    // return this.field_30612;
+    // }
 
     @Override
     public void setAttacker(@Nullable LivingEntity attacker) {
@@ -591,7 +576,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
 
     @Override
     public void onDeath(DamageSource source) {
-        LOGGER.info("Villager {} died, message: '{}'", (Object) this, (Object) source.getDeathMessage(this).getString());
+        LOGGER.info("Dwarf {} died, message: '{}'", (Object) this, (Object) source.getDeathMessage(this).getString());
         Entity entity = source.getAttacker();
         if (entity != null) {
             this.notifyDeath(entity);
@@ -656,12 +641,11 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
             return;
         }
         for (int i = 0; i < this.getInventory().size(); ++i) {
-            int j;
             Integer integer;
             ItemStack itemStack = this.getInventory().getStack(i);
             if (itemStack.isEmpty() || (integer = ITEM_FOOD_VALUES.get(itemStack.getItem())) == null)
                 continue;
-            for (int k = j = itemStack.getCount(); k > 0; --k) {
+            for (int k = itemStack.getCount(); k > 0; --k) {
                 this.foodLevel = (byte) (this.foodLevel + integer);
                 this.getInventory().removeStack(i, 1);
                 if (this.lacksFood())
@@ -700,7 +684,7 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
 
     @Override
     protected Text getDefaultName() {
-        return new TranslatableText(this.getType().getTranslationKey() + "." + EntityInit.DWARF_PROFESSION.getId(this.getDwarfData().getProfession()).getPath());
+        return new TranslatableText(this.getType().getTranslationKey() + "." + PointOfInterestsInit.DWARF_PROFESSION.getId(this.getDwarfData().getProfession()).getPath());
     }
 
     @Override
@@ -821,14 +805,14 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         this.fillRecipesFromPool(tradeOfferList, factorys, 2);
     }
 
-    public void talkWithVillager(ServerWorld world, DwarfEntity villager, long time) {
+    public void talkWithDwarf(ServerWorld world, DwarfEntity villager, long time) {
         if (time >= this.gossipStartTime && time < this.gossipStartTime + 1200L || time >= villager.gossipStartTime && time < villager.gossipStartTime + 1200L) {
             return;
         }
         this.gossip.shareGossipFrom(villager.gossip, this.random, 10);
         this.gossipStartTime = time;
         villager.gossipStartTime = time;
-        this.summonGolem(world, time, 5);
+        // this.summonGolem(world, time, 5);
     }
 
     private void decayGossip() {
@@ -844,52 +828,51 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         this.lastGossipDecayTime = l;
     }
 
-    public void summonGolem(ServerWorld world, long time, int requiredCount) {
-        if (!this.canSummonGolem(time)) {
-            return;
-        }
-        Box box = this.getBoundingBox().expand(10.0, 10.0, 10.0);
-        List<DwarfEntity> list = world.getNonSpectatingEntities(DwarfEntity.class, box);
-        List list2 = list.stream().filter(villager -> villager.canSummonGolem(time)).limit(5L).collect(Collectors.toList());
-        if (list2.size() < requiredCount) {
-            return;
-        }
-        IronGolemEntity ironGolemEntity = this.spawnIronGolem(world);
-        if (ironGolemEntity == null) {
-            return;
-        }
-        list.forEach(GolemLastSeenSensor::rememberIronGolem);
-    }
+    // public void summonGolem(ServerWorld world, long time, int requiredCount) {
+    // if (!this.canSummonGolem(time)) {
+    // return;
+    // }
+    // Box box = this.getBoundingBox().expand(10.0, 10.0, 10.0);
+    // List<DwarfEntity> list = world.getNonSpectatingEntities(DwarfEntity.class, box);
+    // List list2 = list.stream().filter(dwarf -> dwarf.canSummonGolem(time)).limit(5L).collect(Collectors.toList());
+    // if (list2.size() < requiredCount) {
+    // return;
+    // }
+    // IronGolemEntity ironGolemEntity = this.spawnIronGolem(world);
+    // if (ironGolemEntity == null) {
+    // return;
+    // }
+    // list.forEach(GolemLastSeenSensor::rememberIronGolem);
+    // }
 
-    public boolean canSummonGolem(long time) {
-        if (!this.hasRecentlySlept(this.world.getTime())) {
-            return false;
-        }
-        return !this.brain.hasMemoryModule(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
-    }
+    // public boolean canSummonGolem(long time) {
+    // if (!this.hasRecentlySlept(this.world.getTime())) {
+    // return false;
+    // }
+    // return !this.brain.hasMemoryModule(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+    // }
 
-    @Nullable
-    private IronGolemEntity spawnIronGolem(ServerWorld world) {
-        BlockPos blockPos = this.getBlockPos();
-        for (int i = 0; i < 10; ++i) {
-            IronGolemEntity ironGolemEntity;
-            double e;
-            double d = world.random.nextInt(16) - 8;
-            BlockPos blockPos2 = this.getHighestOpenPositionOnOffset(blockPos, d, e = (double) (world.random.nextInt(16) - 8));
-            if (blockPos2 == null || (ironGolemEntity = EntityType.IRON_GOLEM.create(world, null, null, null, blockPos2, SpawnReason.MOB_SUMMONED, false, false)) == null)
-                continue;
-            if (ironGolemEntity.canSpawn(world, SpawnReason.MOB_SUMMONED) && ironGolemEntity.canSpawn(world)) {
-                world.spawnEntityAndPassengers(ironGolemEntity);
-                return ironGolemEntity;
-            }
-            ironGolemEntity.discard();
-        }
-        return null;
-    }
+    // @Nullable
+    // private IronGolemEntity spawnIronGolem(ServerWorld world) {
+    // BlockPos blockPos = this.getBlockPos();
+    // for (int i = 0; i < 10; ++i) {
+    // IronGolemEntity ironGolemEntity;
+    // double e;
+    // double d = world.random.nextInt(16) - 8;
+    // BlockPos blockPos2 = this.getHighestOpenPositionOnOffset(blockPos, d, e = (double) (world.random.nextInt(16) - 8));
+    // if (blockPos2 == null || (ironGolemEntity = EntityType.IRON_GOLEM.create(world, null, null, null, blockPos2, SpawnReason.MOB_SUMMONED, false, false)) == null)
+    // continue;
+    // if (ironGolemEntity.canSpawn(world, SpawnReason.MOB_SUMMONED) && ironGolemEntity.canSpawn(world)) {
+    // world.spawnEntityAndPassengers(ironGolemEntity);
+    // return ironGolemEntity;
+    // }
+    // ironGolemEntity.discard();
+    // }
+    // return null;
+    // }
 
     @Nullable
     private BlockPos getHighestOpenPositionOnOffset(BlockPos pos, double x, double z) {
-        int i = 6;
         BlockPos blockPos = pos.add(x, 6.0, z);
         BlockState blockState = this.world.getBlockState(blockPos);
         for (int j = 6; j >= -6; --j) {
@@ -960,13 +943,13 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         this.brain.remember(MemoryModuleType.LAST_WOKEN, this.world.getTime());
     }
 
-    private boolean hasRecentlySlept(long worldTime) {
-        Optional<Long> optional = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
-        if (optional.isPresent()) {
-            return worldTime - optional.get() < 24000L;
-        }
-        return false;
-    }
+    // private boolean hasRecentlySlept(long worldTime) {
+    // Optional<Long> optional = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
+    // if (optional.isPresent()) {
+    // return worldTime - optional.get() < 24000L;
+    // }
+    // return false;
+    // }
 
     // MerchantEntity
 
@@ -1116,4 +1099,46 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
         return this.world.isClient;
     }
 
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        boolean bl = super.damage(source, amount);
+
+        // System.out.println("F1???Set Target: " + bl);
+
+        if (this.world.isClient) {
+            return false;
+        }
+        if (!bl || !(source.getAttacker() instanceof LivingEntity)) {
+            return bl;
+        }
+        LivingEntity livingEntity = (LivingEntity) source.getAttacker();
+        // System.out.println("???Set Target: " + bl +"::"+this.canTarget(livingEntity) + "::" + LookTargetUtil.isNewTargetTooFar(this, livingEntity, 4.0) + "::" +
+        // this.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET));
+
+        if (this.canTarget(livingEntity) && !LookTargetUtil.isNewTargetTooFar(this, livingEntity, 4.0)) {
+            // System.out.println("Lets go: Set Target: " + livingEntity);
+            this.setAttackTarget(livingEntity);
+
+        }
+        return bl;
+    }
+
+    private void setAttackTarget(LivingEntity entity) {
+        this.brain.forget(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+        this.brain.forget(MemoryModuleType.PATH);
+        this.brain.forget(MemoryModuleType.WALK_TARGET);
+        this.brain.forget(MemoryModuleType.LOOK_TARGET);
+        this.brain.forget(MemoryModuleType.BREED_TARGET);
+        this.brain.forget(MemoryModuleType.INTERACTION_TARGET);
+        this.brain.remember(MemoryModuleType.ATTACK_TARGET, entity, 200L);
+        this.setAttacker(entity);
+    }
+
+    @Override
+    @Nullable
+    public LivingEntity getTarget() {
+        return this.brain.getOptionalMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
+    }
+    // To check if can work
+    // && piglin.getBrain().hasMemoryModule(MemoryModuleType.ATTACK_TARGET)
 }

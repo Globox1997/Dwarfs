@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import net.dwarfs.entity.DwarfEntity;
 import net.dwarfs.entity.extra.DwarfProfession;
-import net.minecraft.entity.EntityType;
+import net.dwarfs.init.EntityInit;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -18,7 +18,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.village.VillagerProfession;
 
 public class GatherItemsDwarfTask extends Task<DwarfEntity> {
     private static final int MAX_RANGE = 5;
@@ -31,7 +30,7 @@ public class GatherItemsDwarfTask extends Task<DwarfEntity> {
 
     @Override
     protected boolean shouldRun(ServerWorld serverWorld, DwarfEntity dwarfEntity) {
-        return LookTargetUtil.canSee(dwarfEntity.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityType.VILLAGER);
+        return LookTargetUtil.canSee(dwarfEntity.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityInit.DWARF);
     }
 
     @Override
@@ -53,7 +52,7 @@ public class GatherItemsDwarfTask extends Task<DwarfEntity> {
             return;
         }
         LookTargetUtil.lookAtAndWalkTowardsEachOther(dwarfEntity, dwarfEntity2, 0.5f);
-        dwarfEntity.talkWithVillager(serverWorld, dwarfEntity2, l);
+        dwarfEntity.talkWithDwarf(serverWorld, dwarfEntity2, l);
         if (dwarfEntity.wantsToStartBreeding() && (dwarfEntity.getDwarfData().getProfession() == DwarfProfession.FARMER || dwarfEntity2.canBreed())) {
             GatherItemsDwarfTask.giveHalfOfStack(dwarfEntity, dwarfEntity.ITEM_FOOD_VALUES.keySet(), dwarfEntity2);
         }

@@ -4,7 +4,8 @@
   "package": "net.dwarfs.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "accessor.RegistryAccess"
+    "accessor.RegistryAccess",
+    "accessor.SensorTypeAccess"
   ],
   "client": [],
   "injectors": {

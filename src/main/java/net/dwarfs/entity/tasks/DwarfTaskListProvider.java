@@ -14,40 +14,35 @@ import net.dwarfs.init.EntityInit;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.MemoryModuleState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.task.CelebrateRaidWinTask;
+import net.minecraft.entity.ai.brain.sensor.Sensor;
+import net.minecraft.entity.ai.brain.task.AttackTask;
 import net.minecraft.entity.ai.brain.task.CompositeTask;
-import net.minecraft.entity.ai.brain.task.EndRaidTask;
+import net.minecraft.entity.ai.brain.task.ConditionalTask;
+import net.minecraft.entity.ai.brain.task.CrossbowAttackTask;
 import net.minecraft.entity.ai.brain.task.FindEntityTask;
 import net.minecraft.entity.ai.brain.task.FindInteractionTargetTask;
 import net.minecraft.entity.ai.brain.task.FindPointOfInterestTask;
 import net.minecraft.entity.ai.brain.task.FindWalkTargetTask;
-import net.minecraft.entity.ai.brain.task.FollowCustomerTask;
 import net.minecraft.entity.ai.brain.task.FollowMobTask;
-import net.minecraft.entity.ai.brain.task.ForgetBellRingTask;
+import net.minecraft.entity.ai.brain.task.ForgetAttackTargetTask;
 import net.minecraft.entity.ai.brain.task.ForgetCompletedPointOfInterestTask;
-import net.minecraft.entity.ai.brain.task.GiveGiftsToHeroTask;
 import net.minecraft.entity.ai.brain.task.GoToIfNearbyTask;
 import net.minecraft.entity.ai.brain.task.GoToNearbyPositionTask;
-import net.minecraft.entity.ai.brain.task.GoToRememberedPositionTask;
 import net.minecraft.entity.ai.brain.task.GoTowardsLookTarget;
-import net.minecraft.entity.ai.brain.task.HideInHomeDuringRaidTask;
-import net.minecraft.entity.ai.brain.task.HideInHomeTask;
-import net.minecraft.entity.ai.brain.task.HideWhenBellRingsTask;
 import net.minecraft.entity.ai.brain.task.JumpInBedTask;
 import net.minecraft.entity.ai.brain.task.LookAroundTask;
+import net.minecraft.entity.ai.brain.task.LookTargetUtil;
+import net.minecraft.entity.ai.brain.task.MeleeAttackTask;
 import net.minecraft.entity.ai.brain.task.OpenDoorsTask;
-import net.minecraft.entity.ai.brain.task.PanicTask;
 import net.minecraft.entity.ai.brain.task.RandomTask;
-import net.minecraft.entity.ai.brain.task.RingBellTask;
-import net.minecraft.entity.ai.brain.task.RunAroundAfterRaidTask;
+import net.minecraft.entity.ai.brain.task.RangedApproachTask;
 import net.minecraft.entity.ai.brain.task.ScheduleActivityTask;
-import net.minecraft.entity.ai.brain.task.SeekSkyAfterRaidWinTask;
 import net.minecraft.entity.ai.brain.task.SleepTask;
 import net.minecraft.entity.ai.brain.task.StartRaidTask;
 import net.minecraft.entity.ai.brain.task.StayAboveWaterTask;
-import net.minecraft.entity.ai.brain.task.StopPanickingTask;
 import net.minecraft.entity.ai.brain.task.Task;
 import net.minecraft.entity.ai.brain.task.WaitTask;
 import net.minecraft.entity.ai.brain.task.WakeUpTask;
@@ -55,7 +50,10 @@ import net.minecraft.entity.ai.brain.task.WalkHomeTask;
 import net.minecraft.entity.ai.brain.task.WalkToNearestVisibleWantedItemTask;
 import net.minecraft.entity.ai.brain.task.WanderAroundTask;
 import net.minecraft.entity.ai.brain.task.WanderIndoorsTask;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Items;
 import net.minecraft.world.poi.PointOfInterestType;
 
 public class DwarfTaskListProvider {
@@ -85,10 +83,10 @@ public class DwarfTaskListProvider {
     }
 
     public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createWorkTasks(DwarfProfession profession, float speed) {
-        DwarfWorkTask villagerWorkTask = profession == DwarfProfession.FARMER ? new FarmerWorkTask() : new DwarfWorkTask();
+        DwarfWorkTask dwarfWorkTask = profession == DwarfProfession.FARMER ? new FarmerWorkTask() : new DwarfWorkTask();
         return ImmutableList.of(DwarfTaskListProvider.createBusyFollowTask(),
                 Pair.of(5,
-                        new RandomTask(ImmutableList.of(Pair.of(villagerWorkTask, 7), Pair.of(new GoToIfNearbyTask(MemoryModuleType.JOB_SITE, 0.4f, 4), 2),
+                        new RandomTask(ImmutableList.of(Pair.of(dwarfWorkTask, 7), Pair.of(new GoToIfNearbyTask(MemoryModuleType.JOB_SITE, 0.4f, 4), 2),
                                 Pair.of(new GoToNearbyPositionTask(MemoryModuleType.JOB_SITE, 0.4f, 1, 10), 5),
                                 Pair.of(new GoToSecondaryPositionTask(MemoryModuleType.SECONDARY_JOB_SITE, speed, 1, 6, MemoryModuleType.JOB_SITE), 5),
                                 Pair.of(new FarmerDwarfTask(), profession == DwarfProfession.FARMER ? 2 : 5), Pair.of(new BoneMealTask(), profession == DwarfProfession.FARMER ? 4 : 7)))),
@@ -101,7 +99,7 @@ public class DwarfTaskListProvider {
         return ImmutableList.of(Pair.of(0, new WanderAroundTask(80, 120)), DwarfTaskListProvider.createFreeFollowTask(), Pair.of(5, new PlayWithDwarfBabiesTask()),
                 Pair.of(5,
                         new RandomTask(ImmutableMap.of(MemoryModuleType.VISIBLE_VILLAGER_BABIES, MemoryModuleState.VALUE_ABSENT),
-                                ImmutableList.of(Pair.of(FindEntityTask.create(EntityType.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 2),
+                                ImmutableList.of(Pair.of(FindEntityTask.create(EntityInit.DWARF, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 2),
                                         Pair.of(FindEntityTask.create(EntityType.CAT, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 1), Pair.of(new FindWalkTargetTask(speed), 1),
                                         Pair.of(new GoTowardsLookTarget(speed, 2), 1), Pair.of(new JumpInBedTask(speed), 2), Pair.of(new WaitTask(20, 40), 2)))),
                 Pair.of(99, new ScheduleActivityTask()));
@@ -129,8 +127,8 @@ public class DwarfTaskListProvider {
     public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createIdleTasks(DwarfProfession profession, float speed) {
         return ImmutableList.of(
                 Pair.of(2,
-                        new RandomTask(ImmutableList.of(Pair.of(FindEntityTask.create(EntityType.VILLAGER, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 2),
-                                Pair.of(new FindEntityTask<DwarfEntity, PassiveEntity>(EntityType.VILLAGER, 8, PassiveEntity::isReadyToBreed, PassiveEntity::isReadyToBreed,
+                        new RandomTask(ImmutableList.of(Pair.of(FindEntityTask.create(EntityInit.DWARF, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 2),
+                                Pair.of(new FindEntityTask<DwarfEntity, PassiveEntity>(EntityInit.DWARF, 8, PassiveEntity::isReadyToBreed, PassiveEntity::isReadyToBreed,
                                         MemoryModuleType.BREED_TARGET, speed, 2), 1),
                                 Pair.of(FindEntityTask.create(EntityType.CAT, 8, MemoryModuleType.INTERACTION_TARGET, speed, 2), 1), Pair.of(new FindWalkTargetTask(speed), 1),
                                 Pair.of(new GoTowardsLookTarget(speed, 2), 1), Pair.of(new JumpInBedTask(speed), 1), Pair.of(new WaitTask(30, 60), 1)))),
@@ -143,6 +141,63 @@ public class DwarfTaskListProvider {
                 DwarfTaskListProvider.createFreeFollowTask(), Pair.of(99, new ScheduleActivityTask()));
         // Pair.of(3, new GiveGiftsToHeroTask(100)),
     }
+
+    // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createFightTasks(DwarfProfession profession, float speed, DwarfEntity dwarfEntity) {
+
+    // // return ImmutableList.of(Pair.of(10, ImmutableList.of(new ForgetAttackTargetTask(livingEntity -> !PiglinBrain.isPreferredAttackTarget(piglin, livingEntity)), new
+    // // ConditionalTask<DwarfEntity>(PiglinBrain::isHoldingCrossbow, new AttackTask(5, 0.75f)), new RangedApproachTask(1.0f), new MeleeAttackTask(20), new CrossbowAttackTask(), new
+    // // ForgetTask<DwarfEntity>(PiglinBrain::getNearestZombifiedPiglin, MemoryModuleType.ATTACK_TARGET)), MemoryModuleType.ATTACK_TARGET));
+
+    // // return ImmutableList.of(Pair.of(10, ImmutableList.of(new ForgetAttackTargetTask(livingEntity -> !getPreferredTarget(dwarf).filter(livingEntity2 -> livingEntity2 == target).isPresent()),
+    // // new ConditionalTask<DwarfEntity>(dwarf -> dwarf.isHolding(Items.CROSSBOW), new AttackTask(5, 0.75f)), new RangedApproachTask(1.0f), new MeleeAttackTask(20), new CrossbowAttackTask()),
+    // // MemoryModuleType.ATTACK_TARGET));
+    // // return ImmutableList.of(Pair.of(10, ImmutableList.of(new ForgetAttackTargetTask(livingEntity -> !DwarfTaskListProvider.isPreferredAttackTarget(dwarfEntity, (LivingEntity)livingEntity)),
+    // // new ConditionalTask<DwarfEntity>(dwarf -> dwarfEntity.isHolding(Items.CROSSBOW)), new AttackTask(5, 0.75f)), new RangedApproachTask(1.0f), new MeleeAttackTask(20), new
+    // // CrossbowAttackTask()),
+    // // MemoryModuleType.ATTACK_TARGET);#
+    // return ImmutableList.of(Pair.of(10, new ForgetAttackTargetTask(livingEntity -> !DwarfTaskListProvider.isPreferredAttackTarget(dwarfEntity, (LivingEntity) livingEntity))),
+    // Pair.of(5, new AttackTask(5, 0.75f)), Pair.of(5, new RangedApproachTask(1.0f)), Pair.of(5, new MeleeAttackTask(20)), Pair.of(5, new CrossbowAttackTask()),
+    // MemoryModuleType.ATTACK_TARGET);
+    // // , new HuntFinishTask()
+    // }
+
+    public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createFightTasks(DwarfProfession profession, float speed) {
+        float f = speed * 1.5f;
+        return ImmutableList.of(Pair.of(0, new ForgetAttackTargetTask()), Pair.of(1, new AttackTask(5, 0.75f)), Pair.of(5, new RangedApproachTask(1.0f)), Pair.of(3, new FindWalkTargetTask(f, 2, 2)),
+                Pair.of(5, new MeleeAttackTask(20)), Pair.of(5, new CrossbowAttackTask()));
+    }
+
+    // private static boolean isPreferredAttackTarget(DwarfEntity dwarf, LivingEntity target) {
+    // return DwarfTaskListProvider.getPreferredTarget(dwarf).filter(livingEntity2 -> livingEntity2 == target).isPresent();
+    // }
+
+    // private static Optional<? extends LivingEntity> getPreferredTarget(DwarfEntity dwarf) {
+    // Optional<PlayerEntity> optional2;
+    // Brain<DwarfEntity> brain = dwarf.getBrain();
+
+    // Optional<LivingEntity> optional = LookTargetUtil.getEntity(dwarf, MemoryModuleType.ANGRY_AT);
+    // if (optional.isPresent() && Sensor.testAttackableTargetPredicateIgnoreVisibility(dwarf, optional.get())) {
+    // return optional;
+    // }
+    // if (brain.hasMemoryModule(MemoryModuleType.UNIVERSAL_ANGER) && (optional2 = brain.getOptionalMemory(MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER)).isPresent()) {
+    // return optional2;
+    // }
+    // // optional2 = (Optional<MobEntity>) brain.getOptionalMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS);
+    // // if (optional2.isPresent()) {
+    // // return optional2;
+    // // }
+    // Optional<PlayerEntity> optional3 = brain.getOptionalMemory(MemoryModuleType.NEAREST_TARGETABLE_PLAYER_NOT_WEARING_GOLD);
+    // if (optional3.isPresent() && Sensor.testAttackableTargetPredicate(dwarf, optional3.get())) {
+    // return optional3;
+    // }
+    // return Optional.empty();
+    // }
+
+    // private static void addFightActivities(PiglinEntity piglin, Brain<PiglinEntity> brain) {
+    // brain.setTaskList(Activity.FIGHT, 10, ImmutableList.of(new ForgetAttackTargetTask(livingEntity -> !PiglinBrain.isPreferredAttackTarget(piglin, livingEntity)), new
+    // ConditionalTask<PiglinEntity>(PiglinBrain::isHoldingCrossbow, new AttackTask(5, 0.75f)), new RangedApproachTask(1.0f), new MeleeAttackTask(20), new CrossbowAttackTask(), new HuntFinishTask(),
+    // new ForgetTask<PiglinEntity>(PiglinBrain::getNearestZombifiedPiglin, MemoryModuleType.ATTACK_TARGET)), MemoryModuleType.ATTACK_TARGET);
+    // }
 
     // public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createPanicTasks(DwarfProfession profession, float speed) {
     // float f = speed * 1.5f;

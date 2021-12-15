@@ -38,6 +38,9 @@ public class TakeJobSiteTask extends Task<DwarfEntity> {
     protected void run(ServerWorld serverWorld, DwarfEntity dwarfEntity3, long l) {
         BlockPos blockPos = dwarfEntity3.getBrain().getOptionalMemory(MemoryModuleType.POTENTIAL_JOB_SITE).get().getPos();
         Optional<PointOfInterestType> optional = serverWorld.getPointOfInterestStorage().getType(blockPos);
+
+        System.out.println("runJobSite: " + optional.isPresent() + "::" + optional.get() + "::" + blockPos);
+
         if (!optional.isPresent()) {
             return;
         }
