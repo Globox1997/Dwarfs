@@ -65,8 +65,7 @@ public class DwarfTaskListProvider {
         return ImmutableList.of(Pair.of(0, new StayAboveWaterTask(0.8f)), Pair.of(0, new OpenDoorsTask()), Pair.of(0, new LookAroundTask(45, 90)), Pair.of(0, new WakeUpTask()),
                 Pair.of(0, new StartRaidTask()), Pair.of(0, new ForgetCompletedPointOfInterestTask(profession.getWorkStation(), MemoryModuleType.JOB_SITE)),
                 Pair.of(0, new ForgetCompletedPointOfInterestTask(profession.getWorkStation(), MemoryModuleType.POTENTIAL_JOB_SITE)), Pair.of(1, new WanderAroundTask()),
-                Pair.of(2, new WorkStationCompetitionTask(profession)),
-
+                Pair.of(2, new WorkStationCompetitionTask(profession)), Pair.of(3, new DwarfAttackTask(5, 0.75f)),
                 // new Pair[] { Pair.of(5, new WalkToNearestVisibleWantedItemTask<>(speed, false, 4)),
                 // Pair.of(6, new FindPointOfInterestTask(profession.getWorkStation(), MemoryModuleType.JOB_SITE, MemoryModuleType.POTENTIAL_JOB_SITE, true, Optional.empty())),
                 // Pair.of(7, new WalkTowardJobSiteTask(speed)), Pair.of(8, new TakeJobSiteTask(speed)),
@@ -162,9 +161,9 @@ public class DwarfTaskListProvider {
     // }
 
     public static ImmutableList<Pair<Integer, ? extends Task<? super DwarfEntity>>> createFightTasks(DwarfProfession profession, float speed) {
-        float f = speed * 1.5f;
-        return ImmutableList.of(Pair.of(0, new ForgetAttackTargetTask()), Pair.of(1, new AttackTask(5, 0.75f)), Pair.of(5, new RangedApproachTask(1.0f)), Pair.of(3, new FindWalkTargetTask(f, 2, 2)),
-                Pair.of(5, new MeleeAttackTask(20)), Pair.of(5, new CrossbowAttackTask()));
+        return ImmutableList.of(Pair.of(0, new ForgetAttackTargetTask()), Pair.of(1, new AttackTask(5, 0.5f)), Pair.of(2, new RangedApproachTask(1.0f)),
+                Pair.of(3, new FindWalkTargetTask(0.5F, 2, 2)), Pair.of(4, new DwarfMeleeAttackTask(20)), Pair.of(5, new CrossbowAttackTask()));
+        // , Pair.of(6, new DwarfAttackTask(5, 0.75f))
     }
 
     // private static boolean isPreferredAttackTarget(DwarfEntity dwarf, LivingEntity target) {

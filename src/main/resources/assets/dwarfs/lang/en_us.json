@@ -1,4 +1,8 @@
 {
     "entity.dwarfs.dwarf": "Dwarf",
-    "item.dwarfs.spawn_dwarf": "Dwarf Spawn Egg"
+    "item.dwarfs.spawn_dwarf": "Dwarf Spawn Egg",
+
+    "block.dwarfs.brewing_barrel": "Brewing Barrel",
+    "item.dwarfs.beer": "Beer",
+    "item.dwarfs.jug": "Jug"
 }

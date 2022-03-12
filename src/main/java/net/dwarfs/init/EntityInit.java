@@ -2,6 +2,7 @@ package net.dwarfs.init;
 
 import com.google.common.collect.ImmutableSet;
 
+import net.dwarfs.entity.BeerEntity;
 import net.dwarfs.entity.DwarfEntity;
 import net.dwarfs.entity.extra.DwarfProfession;
 import net.dwarfs.mixin.accessor.RegistryAccess;
@@ -31,6 +32,7 @@ import net.minecraft.world.poi.PointOfInterestType;
 public class EntityInit {
 
     public static final EntityType<DwarfEntity> DWARF = FabricEntityTypeBuilder.create(SpawnGroup.MISC, DwarfEntity::new).dimensions(EntityDimensions.changing(0.7F, 1.2F)).build();
+    public static final EntityType<BeerEntity> BEER_ENTITY = FabricEntityTypeBuilder.<BeerEntity>create(SpawnGroup.MISC, BeerEntity::new).dimensions(EntityDimensions.fixed(0.5F, 0.5F)).build();
 
     public static void init() {
         Registry.register(Registry.ENTITY_TYPE, new Identifier("dwarfs", "dwarf"), DWARF);

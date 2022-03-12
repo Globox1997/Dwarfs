@@ -10,15 +10,18 @@ import net.minecraft.client.model.ModelPartData;
 import net.minecraft.client.model.ModelTransform;
 import net.minecraft.client.model.TexturedModelData;
 import net.minecraft.client.render.entity.model.EntityModelPartNames;
+import net.minecraft.client.render.entity.model.ModelWithArms;
 import net.minecraft.client.render.entity.model.ModelWithHat;
 import net.minecraft.client.render.entity.model.ModelWithHead;
 import net.minecraft.client.render.entity.model.SinglePartEntityModel;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.MerchantEntity;
+import net.minecraft.util.Arm;
 import net.minecraft.util.math.MathHelper;
 
 @Environment(EnvType.CLIENT)
-public class DwarfEntityModel<T extends Entity> extends SinglePartEntityModel<T> implements ModelWithHead, ModelWithHat {
+public class DwarfEntityModel<T extends Entity> extends SinglePartEntityModel<T> implements ModelWithHead, ModelWithHat, ModelWithArms {
     private final ModelPart root;
     private final ModelPart head;
     private final ModelPart hat;
@@ -89,5 +92,18 @@ public class DwarfEntityModel<T extends Entity> extends SinglePartEntityModel<T>
         this.head.visible = visible;
         this.hat.visible = visible;
         this.hatRim.visible = visible;
+    }
+
+    @Override
+    public void setArmAngle(Arm arm, MatrixStack matrices) {
+        this.getArm(arm).rotate(matrices);
+    }
+
+    protected ModelPart getArm(Arm arm) {
+    //    if (arm == Arm.LEFT) {
+    //        return this.leftArm;
+   //    }
+      //  return this.rightArm;
+        return this.hatRim;
     }
 }

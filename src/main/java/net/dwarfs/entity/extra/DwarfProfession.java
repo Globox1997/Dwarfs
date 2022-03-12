@@ -19,9 +19,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class DwarfProfession {
     public static final DwarfProfession NONE = DwarfProfession.register("none", PointOfInterestsInit.NOTHING, null);
-    public static final DwarfProfession ARMORER = DwarfProfession.register("armorer", PointOfInterestsInit.BARTENDER, SoundEvents.ENTITY_VILLAGER_WORK_ARMORER);
-    public static final DwarfProfession FARMER = DwarfProfession.register("farmer", PointOfInterestsInit.BARTENDER,
+    public static final DwarfProfession ARMORER = DwarfProfession.register("armorer", PointOfInterestsInit.UNUSED, SoundEvents.ENTITY_VILLAGER_WORK_ARMORER);
+    public static final DwarfProfession FARMER = DwarfProfession.register("farmer", PointOfInterestsInit.UNUSED,
             ImmutableSet.of(Items.WHEAT, Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.BONE_MEAL), ImmutableSet.of(Blocks.FARMLAND), SoundEvents.ENTITY_VILLAGER_WORK_FARMER);
+
+    public static final DwarfProfession BREWER = DwarfProfession.register("brewer", PointOfInterestsInit.BARTENDER, SoundEvents.ENTITY_VILLAGER_WORK_ARMORER);
+
     public static final DwarfProfession NITWIT = DwarfProfession.register("nitwit", PointOfInterestsInit.NOTHING, null);
 
     // public static final DwarfProfession BUTCHER = DwarfProfession.register("butcher", DwarfPointOfInterestType.BUTCHER, SoundEvents.ENTITY_VILLAGER_WORK_BUTCHER);

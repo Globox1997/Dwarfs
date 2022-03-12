@@ -135,8 +135,8 @@ public class DwarfEntity extends PassiveEntity implements InteractionObserver, D
             MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER, MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, MemoryModuleType.WALK_TARGET,
             new MemoryModuleType[] { MemoryModuleType.LOOK_TARGET, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.BREED_TARGET, MemoryModuleType.PATH, MemoryModuleType.DOORS_TO_CLOSE,
                     MemoryModuleType.NEAREST_BED, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.NEAREST_HOSTILE, MemoryModuleType.SECONDARY_JOB_SITE,
-                    MemoryModuleType.HIDING_PLACE, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.LAST_SLEPT, MemoryModuleType.LAST_WOKEN,
-                    MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY });
+                    MemoryModuleType.HIDING_PLACE, MemoryModuleType.ATTACK_TARGET, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.LAST_SLEPT,
+                    MemoryModuleType.LAST_WOKEN, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.LAST_WORKED_AT_POI, MemoryModuleType.GOLEM_DETECTED_RECENTLY });
     private static final ImmutableList<SensorType<? extends Sensor<? super DwarfEntity>>> SENSORS = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS,
             SensorType.NEAREST_ITEMS, SensorType.NEAREST_BED, SensorType.HURT_BY, PointOfInterestsInit.DWARF_HOSTILES_SENSOR, PointOfInterestsInit.DWARF_BABIES_SENSOR,
             PointOfInterestsInit.DWARF_SECONDARY_POI_SENSOR);

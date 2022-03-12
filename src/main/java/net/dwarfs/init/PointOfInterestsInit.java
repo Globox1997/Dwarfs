@@ -34,7 +34,8 @@ public class PointOfInterestsInit {
     public static final Predicate<PointOfInterestType> IS_USED_BY_DWARF_PROFESSION = poiType -> DWARF_WORKSTATIONS.get().contains(poiType);
 
     public static final PointOfInterestType NOTHING = PointOfInterestHelper.register(new Identifier("dwarfs", "nothing"), 1, IS_USED_BY_DWARF_PROFESSION, 1, ImmutableSet.of());
-    public static final PointOfInterestType BARTENDER = PointOfInterestHelper.register(new Identifier("dwarfs", "bartender"), 1, 1, Blocks.DRAGON_EGG);
+    public static final PointOfInterestType BARTENDER = PointOfInterestHelper.register(new Identifier("dwarfs", "bartender"), 1, 1, BlockInit.BREWING_BARREL_BLOCK);
+    public static final PointOfInterestType UNUSED = PointOfInterestHelper.register(new Identifier("dwarfs", "unused"), 1, 1, Blocks.DRAGON_EGG);
     // public static final PointOfInterestType BARTENDER = PointOfInterestHelper.register(new Identifier("dwarfs", "bartender"), 1, 1,
     // ImmutableSet.copyOf(Blocks.DRAGON_EGG.getStateManager().getStates()));
 
@@ -45,6 +46,5 @@ public class PointOfInterestsInit {
 
     public static void init() {
         TrackedDataHandlerRegistry.register(DwarfProfession.DWARF_DATA);
-        System.out.println(BARTENDER.getCompletionCondition());
     }
 }

@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "dwarfs:block/brewing_barrel"
+        }
+    }
+}
